@@ -3,7 +3,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, stop/0]).
+-export([start_link/0, stop/0, start_pool/3]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -15,6 +15,7 @@
 %% API functions
 %% ===================================================================
 
+%% Start high level supervisor
 start_link() ->
 	%% The supervisor registered locally as "megapool"
     supervisor:start_link({local, megapool}, ?MODULE, []).
@@ -26,11 +27,29 @@ stop() ->
 		_ -> ok
 	end. 
 
+%% Start individual pool supervisor
+%% MFA - module, function, arguments
+start_pool(Name, Limit, MFA) ->
+	ChildSpec = {
+		Name,
+		{megapool_pool_sup, start_link, [Name, Limit, MFA]},
+		permanent,
+		10500,
+		supervisor,
+		[megapool_pool_sup]
+	},
+	supervisor:start_child(megapool, ChildSpec).
+
+stop_pool(Name) ->
+	supervisor:terminate_child(megapool, Name),
+	supervisor:delete_child(megapool, Name).
+
 
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
-
+	MaxRestart = 5,
+	MaxTime = 3600,
+    {ok, { {one_for_one, MaxRestart, MaxTime}, []} }.
