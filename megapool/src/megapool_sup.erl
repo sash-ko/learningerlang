@@ -3,7 +3,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, stop/0, start_pool/3]).
+-export([start_link/0, stop/0, start_pool/3, stop_pool/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
