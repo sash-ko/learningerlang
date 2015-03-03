@@ -3,7 +3,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, stop/0, start_pool/3, stop_pool/1]).
+-export([start_link/0, start_pool/3, stop_pool/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -19,13 +19,6 @@
 start_link() ->
 	%% The supervisor registered locally as "megapool"
     supervisor:start_link({local, megapool}, ?MODULE, []).
-
-stop() ->
-	case whereis(megapool) of
-		P when is_pid(P) ->
-			exit(P, kill);
-		_ -> ok
-	end. 
 
 %% Start individual pool supervisor
 %% MFA - module, function, arguments
