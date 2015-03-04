@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0]).
+-export([start_link/0, execute/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -19,8 +19,13 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+-record(executable, {sql, database}).
+
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+execute(E = #executable{sql=Sql, database=Database}) ->
+	gen_server:call(?MODULE, {execute, E}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -29,8 +34,8 @@ start_link() ->
 init(Args) ->
     {ok, Args}.
 
-handle_call(_Request, _From, State) ->
-    {reply, ok, State}.
+handle_call({execute, E = #executable{sql=Sql, database=Database}}, _From, State) ->
+	{reply, {ok, Sql}, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
