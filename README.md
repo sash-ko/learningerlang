@@ -16,3 +16,18 @@ erl -pa ebin
 ```erlang
 application:start(myapp)
 ```
+
+### Add dependencies
+
+Create rebar.config file:
+
+```erlang
+{deps, [
+	{pgsql, ".*", {git, "https://github.com/semiocast/pgsql.git"}}
+]}.
+```
+
+```bash
+rebar get-deps
+rebar compile
+```
