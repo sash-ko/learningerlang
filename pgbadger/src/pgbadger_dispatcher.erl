@@ -2,6 +2,8 @@
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 
+-include_lib("deps/epgsql/include/epgsql.hrl").
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -35,7 +37,15 @@ init(Args) ->
     {ok, Args}.
 
 handle_call({execute, E = #executable{sql=Sql, database=Database}}, _From, State) ->
-	{reply, {ok, Sql}, State}.
+
+	{ok, Conn} = epgsql:connect("localhost", "dev", "", [
+    						 	{database, "dev"},
+    							{timeout, 4000}
+							]),
+	Result = epgsql:squery(Conn, Sql),
+	ok = epgsql:close(Conn),
+
+	{reply, {ok, Result}, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
