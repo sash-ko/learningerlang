@@ -1,0 +1,12 @@
+{application, pgbadger,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { pgbadger_app, []}},
+  {env, []}
+ ]}.
