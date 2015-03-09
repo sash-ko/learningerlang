@@ -8,7 +8,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, execute/1]).
+-export([start_link/0, execute/1, add_database/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -21,25 +21,33 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--record(executable, {sql, database}).
+-record(executable, {sql, database_alias}).
+-record(database, {db, user, password="", host="localhost", port=5432}).
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-execute(E = #executable{sql=Sql, database=Database}) ->
+execute(E = #executable{sql=Sql, database_alias=Alias}) ->
 	gen_server:call(?MODULE, {execute, E}).
+
+add_database(DbAlias, Database=#database{db=Db, user=User, password=Password}) ->
+    gen_server:cast(?MODULE, {add_database, DbAlias, Database}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
 init(Args) ->
+    ets:new(databases, [set, named_table]),
     {ok, Args}.
 
-handle_call({execute, E = #executable{sql=Sql, database=Database}}, _From, State) ->
+handle_call({execute, E = #executable{sql=Sql, database_alias=Alias}}, _From, State) ->
+    [{Alias, Db} | _] = ets:lookup(databases, Alias),
 
-	{ok, Conn} = epgsql:connect("localhost", "dev", "", [
-    						 	{database, "dev"},
+    io:format("Db record: ~p~n", [Db]),
+
+	{ok, Conn} = epgsql:connect(Db#database.host, Db#database.user, Db#database.password, [
+    						 	{database, Db#database.db},
     							{timeout, 4000}
 							]),
 	Result = epgsql:squery(Conn, Sql),
@@ -47,7 +55,8 @@ handle_call({execute, E = #executable{sql=Sql, database=Database}}, _From, State
 
 	{reply, {ok, Result}, State}.
 
-handle_cast(_Msg, State) ->
+handle_cast({add_database, DbAlias, Database}, State) ->
+    ets:insert(databases, {DbAlias, Database}),
     {noreply, State}.
 
 handle_info(_Info, State) ->
