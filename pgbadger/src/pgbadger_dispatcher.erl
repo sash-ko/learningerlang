@@ -42,18 +42,15 @@ init(Args) ->
     {ok, Args}.
 
 handle_call({execute, E = #executable{sql=Sql, database_alias=Alias}}, _From, State) ->
-    [{Alias, Db} | _] = ets:lookup(databases, Alias),
-
-    io:format("Db record: ~p~n", [Db]),
-
-	{ok, Conn} = epgsql:connect(Db#database.host, Db#database.user, Db#database.password, [
-    						 	{database, Db#database.db},
-    							{timeout, 4000}
-							]),
-	Result = epgsql:squery(Conn, Sql),
-	ok = epgsql:close(Conn),
-
-	{reply, {ok, Result}, State}.
+    case find_database(Alias) of
+        {ok, Db} ->
+    	   case execute_sql(Db, Sql) of
+                {ok, Result} -> {reply, {ok, Result}, State};
+                {error, Reason} -> {reply, {error, Reason}, State}
+            end;
+        {error, instance} ->
+            {reply, {error, instance}, State}
+    end.
 
 handle_cast({add_database, DbAlias, Database}, State) ->
     ets:insert(databases, {DbAlias, Database}),
@@ -71,4 +68,23 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+execute_sql(Db, Sql) ->
+    case epgsql:connect(Db#database.host, Db#database.user,
+                        Db#database.password,
+                        [{database, Db#database.db}, {timeout, 1000}]) of
+
+        {ok, Conn} ->
+            Result = epgsql:squery(Conn, Sql),
+            ok = epgsql:close(Conn),
+            {ok, Result};
+        {error, Reason} ->
+            {error, Reason}
+    end.
+
+find_database(Alias) ->
+    case ets:lookup(databases, Alias) of
+        [{Alias, Db}] -> {ok, Db};
+        [] -> {error, instance}
+    end.
 
