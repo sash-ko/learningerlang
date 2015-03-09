@@ -10,7 +10,7 @@ rebar compile
 
 ### Start an application from command line
 ```bash
-erl -pa ebin
+erl -pa ebin -pz deps/*/ebin
 ```
 
 ```erlang
