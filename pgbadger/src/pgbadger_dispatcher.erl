@@ -2,8 +2,6 @@
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 
--include_lib("deps/epgsql/include/epgsql.hrl").
-
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -27,10 +25,10 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-execute(E = #executable{sql=Sql, database_alias=Alias}) ->
+execute(E = #executable{}) ->
 	gen_server:call(?MODULE, {execute, E}).
 
-add_database(DbAlias, Database=#database{db=Db, user=User, password=Password}) ->
+add_database(DbAlias, Database=#database{}) ->
     gen_server:cast(?MODULE, {add_database, DbAlias, Database}).
 
 %% ------------------------------------------------------------------
@@ -41,10 +39,10 @@ init(Args) ->
     ets:new(databases, [set, named_table]),
     {ok, Args}.
 
-handle_call({execute, E = #executable{sql=Sql, database_alias=Alias}}, _From, State) ->
-    case find_database(Alias) of
+handle_call({execute, E}, _From, State) ->
+    case find_database(E#executable.database_alias) of
         {ok, Db} ->
-    	   case execute_sql(Db, Sql) of
+    	   case execute_sql(Db, E#executable.sql) of
                 {ok, Result} -> {reply, {ok, Result}, State};
                 {error, Reason} -> {reply, {error, Reason}, State}
             end;
@@ -70,8 +68,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 
 execute_sql(Db, Sql) ->
-    case epgsql:connect(Db#database.host, Db#database.user,
-                        Db#database.password,
+    case epgsql:connect(Db#database.host, Db#database.user, Db#database.password,
                         [{database, Db#database.db}, {timeout, 1000}]) of
 
         {ok, Conn} ->
