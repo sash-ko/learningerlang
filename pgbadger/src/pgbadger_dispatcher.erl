@@ -51,6 +51,7 @@ handle_call({execute, E}, _From, State) ->
     end.
 
 handle_cast({add_database, DbAlias, Database}, State) ->
+    pgbadger_sup:start_pool(DbAlias, 10),
     ets:insert(databases, {DbAlias, Database}),
     {noreply, State}.
 
@@ -70,7 +71,6 @@ code_change(_OldVsn, State, _Extra) ->
 execute_sql(Db, Sql) ->
     case epgsql:connect(Db#database.host, Db#database.user, Db#database.password,
                         [{database, Db#database.db}, {timeout, 1000}]) of
-
         {ok, Conn} ->
             Result = epgsql:squery(Conn, Sql),
             ok = epgsql:close(Conn),

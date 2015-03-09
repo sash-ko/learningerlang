@@ -1,4 +1,4 @@
--module(pgbadger_pool_sup).
+-module(pool_sup).
 
 -behaviour(supervisor).
 
@@ -7,6 +7,9 @@
 
 %% Supervisor callbacks
 -export([init/1]).
+
+%% Helper macro for declaring children of supervisor
+-define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
 %% ===================================================================
 %% API functions
@@ -23,12 +26,4 @@ start_link(DbAlias, Limit) ->
 init([DbAlias, Limit]) ->
 	MaxRestart = 5,
 	MaxTime = 1000,
-	PoolSupSpec = {
-		DbAlias,
-		{pool_sup, start_link, [DbAlias, Limit]},
-		permanent,
-		10500,
-		supervisor,
-		[pool_sup]
-	},
-    {ok, { {one_for_one, MaxRestart, MaxTime}, [PoolSupSpec]} }.
+    {ok, { {one_for_one, MaxRestart, MaxTime}, []} }.
