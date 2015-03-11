@@ -24,7 +24,9 @@ start_link(DbAlias) ->
     gen_server:start_link(?MODULE, [DbAlias], []).
 
 start_worker(DbAlias) ->
-	start_link(DbAlias).
+	{ok, Pid} = start_link(DbAlias),
+	pg_pool_srv:add_worker(DbAlias, Pid),
+	{ok, Pid}.
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
