@@ -23,12 +23,20 @@ start_link(DbAlias, Limit) ->
 init([DbAlias, Limit]) ->
 	MaxRestart = 5,
 	MaxTime = 1000,
-	PoolSupSpec = {
-		DbAlias,
-		{pool_sup, start_link, [DbAlias, Limit]},
+	WorkerPoolSupSpec = {
+		pg_worker_pool,
+		{pg_worker_pool_sup, start_link, [DbAlias, Limit]},
 		permanent,
 		10500,
 		supervisor,
 		[pool_sup]
 	},
-    {ok, { {one_for_one, MaxRestart, MaxTime}, [PoolSupSpec]} }.
+	PoolSrvSpec = {
+		pg_pool_srv,
+		{pg_pool_srv, start_link, [DbAlias, Limit]},
+		permanent,
+		10500,
+		worker,
+		[pool_sup]
+	},
+    {ok, { {one_for_one, MaxRestart, MaxTime}, [PoolSrvSpec, WorkerPoolSupSpec]} }.
