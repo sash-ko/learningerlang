@@ -1,0 +1,1 @@
+-record(database, {db, user, password="", host="localhost", port=5432}).

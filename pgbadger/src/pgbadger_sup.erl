@@ -37,4 +37,5 @@ init([]) ->
 	MaxRestart = 5,
 	MaxTime = 1000,
 	DispatcherSpec = ?CHILD(pgbadger_dispatcher, worker),
-    {ok, { {one_for_all, MaxRestart, MaxTime}, [DispatcherSpec]} }.
+	DbRegisterSpec = ?CHILD(dbregister, worker),
+    {ok, { {one_for_all, MaxRestart, MaxTime}, [DispatcherSpec, DbRegisterSpec]} }.
