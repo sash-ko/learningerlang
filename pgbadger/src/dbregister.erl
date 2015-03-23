@@ -45,6 +45,7 @@ handle_call({find_database, Alias}, _From, State) ->
     end.
 
 handle_cast({add_database, DbAlias, Database}, State) ->
+	%% TODO: add database only new databases
     pgbadger_sup:start_pool(DbAlias, 10),
     ets:insert(databases, {DbAlias, Database}),
     {noreply, State}.

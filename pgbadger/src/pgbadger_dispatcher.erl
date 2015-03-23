@@ -37,7 +37,6 @@ add_database(DbAlias, Database=#database{}) ->
 %% ------------------------------------------------------------------
 
 init(Args) ->
-    % ets:new(databases, [set, named_table]),
     {ok, Args}.
 
 handle_call({execute, E}, _From, State) ->
