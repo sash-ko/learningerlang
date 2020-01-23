@@ -1,4 +1,4 @@
-# learningerlang
+# pgbadger
 
 ### Using rebar to create OTP application
 
